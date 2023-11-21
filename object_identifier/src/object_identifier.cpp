@@ -47,6 +47,7 @@ void ObjectIdentifier::ops_with_img_callback(const object_detector_msgs::ObjectP
     object_identifier_msgs::ObjectPositionsWithID rops_with_id;
     rops_with_id.header = msg->header;
 
+    std::vector<int> ids;
     for(const auto &op : msg->object_positions_with_img)
     {
         geometry_msgs::PoseStamped relative_pose;
@@ -93,10 +94,24 @@ void ObjectIdentifier::ops_with_img_callback(const object_detector_msgs::ObjectP
         rop_with_id.z = op.z;
         rop_with_id.id = nearest_id;
         rops_with_id.object_positions_with_id.push_back(rop_with_id);
+
+        ids.push_back(nearest_id);
     }
 
     ops_with_id_out_.publish(ops_with_id);
     rops_with_id_out_.publish(rops_with_id);
+
+    last_ops_with_id_ = ops_with_id;
+
+    if(IS_ID_DEBUG_)
+    {
+        std::cout << "ids: ";
+        for(const auto &id : ids)
+        {
+            std::cout << id << ", ";
+        }
+        std::cout << std::endl;
+    }
 }
 
 void ObjectIdentifier::process()
