@@ -27,6 +27,18 @@ include_directories(
   ${catkin_INCLUDE_DIRS}
 )
 
+# DBoW
+add_library(DBoW3 SHARED
+  dbow3/descriptors_manipulator.cpp
+  dbow3/feature_vector.cpp
+  dbow3/scoring_object.cpp
+  dbow3/quicklz.cpp
+  dbow3/vocabulary.cpp
+  dbow3/query_results.cpp
+  dbow3/bow_vector.cpp
+  dbow3/database.cpp
+)
+
 add_executable(${PROJECT_NAME}_node
   src/object_identifier_node.cpp
   src/object_identifier.cpp
@@ -34,4 +46,5 @@ add_executable(${PROJECT_NAME}_node
 
 target_link_libraries(${PROJECT_NAME}_node
   ${catkin_LIBRARIES}
+  DBoW3
 )
