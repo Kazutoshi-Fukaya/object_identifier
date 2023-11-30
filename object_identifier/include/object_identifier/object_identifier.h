@@ -10,6 +10,11 @@
 #include <geometry_msgs/TransformStamped.h>
 #include <geometry_msgs/PointStamped.h>
 
+// utils
+#include "dbow3/vocabulary/vocabulary.h"
+#include "dbow3/database/database.h"
+#include "object_identifier/images.h"
+
 // Custom msg
 #include "object_detector_msgs/ObjectPositionsWithImage.h"
 #include "object_identifier_msgs/ObjectPositionsWithID.h"
@@ -19,9 +24,15 @@ namespace object_identifier
 class ObjectIdentifier {
 public:
     ObjectIdentifier();
+    ~ObjectIdentifier();
     void process();
 
 private:
+    void set_detector_mode(std::string detector_mode);
+    void load_reference_images(std::string reference_images_path,std::string image_mode);
+    void calc_features(Image& image,std::string name,cv::Mat img);
+    void create_database(std::string reference_images_path,std::string image_mode,std::string database_name);
+    std::vector<std::string> split(std::string& input,char delimiter);
 
     // node handle
     ros::NodeHandle nh_;
@@ -46,13 +57,26 @@ private:
     object_identifier_msgs::ObjectPositionsWithID last_ops_with_id_;
     int object_id_counter_;
 
+    // database
+    dbow3::Database* database_;
+
+    // detector
+    cv::Ptr<cv::Feature2D> detector_;
+
+    // Reference
+    std::vector<Images> reference_images_;
+
     // parameter
     bool IS_ID_DEBUG_;
+    bool USE_DATABASE_;
     int HZ_;
     double OBJECT_DISTANCE_THRESHOLD_;
     std::string MAP_FRAME_ID_;
     std::string BASE_LINK_FRAME_ID_;
     std::string CAMERA_FRAME_ID_;
+    std::string REFERENCE_IMAGES_PATH_;
+    std::string IMAGE_MODE_;
+    std::string DATABASE_NAME_;
 };
 }
 

@@ -14,12 +14,21 @@ find_package(catkin REQUIRED COMPONENTS
   object_identifier_msgs
 )
 
+# OpenCV
+find_package(OpenCV 4.0 QUIET)
+if(NOT OpenCV_FOUND)
+  find_package(OpenCV 3.0 QUIET)
+  if(NOT OpenCV_FOUND)
+    find_package(OpenCV 2.4.3 QUIET)
+    if(NOT OpenCV_FOUND)
+      message(FATAL_ERROR "OpenCV > 2.4.3 not found.")
+    endif()
+  endif()
+endif()
+
 catkin_package(
   INCLUDE_DIRS include
-  ${catkin_INCLUDE_DIRS}
-#  LIBRARIES object_identifier
-#  CATKIN_DEPENDS roscpp rospy sensor_msgs std_msgs
-#  DEPENDS system_lib
+  ${OpenCV_INCLUDE_DIRS}
 )
 
 include_directories(
@@ -46,5 +55,6 @@ add_executable(${PROJECT_NAME}_node
 
 target_link_libraries(${PROJECT_NAME}_node
   ${catkin_LIBRARIES}
+  ${OpenCV_LIBRARIES}
   DBoW3
 )
