@@ -8,7 +8,8 @@ ObjectIdentifier::ObjectIdentifier()
 {
     // parameter
     private_nh_.param("IS_ID_DEBUG", IS_ID_DEBUG_, false);
-    private_nh_.param("USE_DATABASE", USE_DATABASE_, true);
+    private_nh_.param("USE_VISUALIZATION", USE_VISUALIZATION_, false);
+    private_nh_.param("USE_DATABASE", USE_DATABASE_, false);
     private_nh_.param("HZ", HZ_, 10);
     private_nh_.param("OBJECT_DISTANCE_THRESHOLD", OBJECT_DISTANCE_THRESHOLD_, 0.1);
     private_nh_.param("MAP_FRAME_ID", MAP_FRAME_ID_, std::string("map"));
@@ -36,6 +37,8 @@ ObjectIdentifier::ObjectIdentifier()
     // publisher
     ops_with_id_out_ = nh_.advertise<object_identifier_msgs::ObjectPositionsWithID>("ops_with_id_out", 1);
     rops_with_id_out_ = nh_.advertise<object_identifier_msgs::ObjectPositionsWithID>("rops_with_id_out", 1);
+    if(USE_VISUALIZATION_) markers_pub_ = nh_.advertise<visualization_msgs::MarkerArray>("object_markers", 1);
+    if(USE_VISUALIZATION_) id_markers_pub_ = nh_.advertise<visualization_msgs::MarkerArray>("object_id_markers", 1);
 
     // tf
     buffer_.reset(new tf2_ros::Buffer);
@@ -130,6 +133,30 @@ void ObjectIdentifier::ops_with_img_callback(const object_detector_msgs::ObjectP
             std::cout << id << ", ";
         }
         std::cout << std::endl;
+    }
+
+    if(USE_VISUALIZATION_)
+    {
+        visualization_msgs::MarkerArray marker_array;
+        visualization_msgs::MarkerArray id_array;
+        for(const auto &op : ops_with_id.object_positions_with_id)
+        {
+            visualization_msgs::Marker marker = create_init_marker();
+            marker.id = op.id;
+            marker.pose = get_pose(op.x, op.y);
+            marker.color = get_color(1.0, 0.0, 0.0);
+            marker_array.markers.emplace_back(marker);
+
+            visualization_msgs::Marker id_marker = create_init_marker();
+            id_marker.type = visualization_msgs::Marker::TEXT_VIEW_FACING;
+            id_marker.id = op.id;
+            id_marker.pose = get_pose(op.x, op.y);
+            id_marker.color = get_color(1.0, 1.0, 1.0);
+            id_marker.text = std::to_string(op.id);
+            id_array.markers.emplace_back(id_marker);
+        }
+        markers_pub_.publish(marker_array);
+        id_markers_pub_.publish(id_array);
     }
 }
 
@@ -236,6 +263,44 @@ std::vector<std::string> ObjectIdentifier::split(std::string& input, char delimi
     std::vector<std::string> result;
     while(std::getline(stream,field,delimiter)) result.emplace_back(field);
     return result;
+}
+
+visualization_msgs::Marker ObjectIdentifier::create_init_marker()
+{
+    visualization_msgs::Marker marker;
+    marker.header.frame_id = MAP_FRAME_ID_;
+    marker.header.stamp = ros::Time::now();
+    marker.ns = "object_identifier";
+    marker.type = visualization_msgs::Marker::CUBE;
+    marker.action = visualization_msgs::Marker::ADD;
+    marker.lifetime = ros::Duration(0.1);
+    marker.scale.x = 0.4;
+    marker.scale.y = 0.4;
+    marker.scale.z = 0.6;
+    return marker;
+}
+
+geometry_msgs::Pose ObjectIdentifier::get_pose(double x,double y)
+{
+    geometry_msgs::Pose pose;
+    pose.position.x = x;
+    pose.position.y = y;
+    pose.position.z = 0.0;
+    pose.orientation.x = 0.0;
+    pose.orientation.y = 0.0;
+    pose.orientation.z = 0.0;
+    pose.orientation.w = 1.0;
+    return pose;
+}
+
+std_msgs::ColorRGBA ObjectIdentifier::get_color(double r,double g,double b)
+{
+    std_msgs::ColorRGBA color_msg;
+    color_msg.r = r;
+    color_msg.g = g;
+    color_msg.b = b;
+    color_msg.a = 1.0;
+    return color_msg;
 }
 
 void ObjectIdentifier::process()

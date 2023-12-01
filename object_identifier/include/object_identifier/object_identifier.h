@@ -9,6 +9,7 @@
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 #include <geometry_msgs/TransformStamped.h>
 #include <geometry_msgs/PointStamped.h>
+#include <visualization_msgs/MarkerArray.h>
 
 // utils
 #include "dbow3/vocabulary/vocabulary.h"
@@ -33,6 +34,9 @@ private:
     void calc_features(Image& image,std::string name,cv::Mat img);
     void create_database(std::string reference_images_path,std::string image_mode,std::string database_name);
     std::vector<std::string> split(std::string& input,char delimiter);
+    visualization_msgs::Marker create_init_marker();
+    geometry_msgs::Pose get_pose(double x,double y);
+    std_msgs::ColorRGBA get_color(double r,double g,double b);
 
     // node handle
     ros::NodeHandle nh_;
@@ -45,6 +49,8 @@ private:
     // publisher
     ros::Publisher ops_with_id_out_;
     ros::Publisher rops_with_id_out_;
+    ros::Publisher markers_pub_;
+    ros::Publisher id_markers_pub_;
 
     // callback
     void ops_with_img_callback(const object_detector_msgs::ObjectPositionsWithImageConstPtr& msg);
@@ -68,6 +74,7 @@ private:
 
     // parameter
     bool IS_ID_DEBUG_;
+    bool USE_VISUALIZATION_;
     bool USE_DATABASE_;
     int HZ_;
     double OBJECT_DISTANCE_THRESHOLD_;

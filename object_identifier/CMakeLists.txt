@@ -10,6 +10,7 @@ find_package(catkin REQUIRED COMPONENTS
   tf2_ros
   tf2_geometry_msgs
   geometry_msgs
+  visualization_msgs
   object_detector_msgs
   object_identifier_msgs
 )
