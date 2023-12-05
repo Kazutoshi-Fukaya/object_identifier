@@ -33,9 +33,10 @@ private:
     void load_reference_images(std::string reference_images_path,std::string image_mode);
     void calc_features(Image& image,std::string name,cv::Mat img);
     void create_database(std::string reference_images_path,std::string image_mode,std::string database_name);
+    void identify_object(const object_detector_msgs::ObjectPositionWithImageConstPtr& input_msg,int& object_id);
     std::vector<std::string> split(std::string& input,char delimiter);
     visualization_msgs::Marker create_init_marker();
-    geometry_msgs::Pose get_pose(double x,double y);
+    geometry_msgs::Pose get_pose(double x,double y,double z);
     std_msgs::ColorRGBA get_color(double r,double g,double b);
 
     // node handle

@@ -1,12 +1,13 @@
 <?xml version="1.0"?>
 <launch>
-    <include file="$(find ros_utils)/launch/20230527.launch"/>
+    <include file="$(find ros_utils)/launch/test_bag_play.launch"/>
 
     <!-- darknet_ros -->
     <include file="$(find darknet_ros)/launch/dkan.launch" />
 
     <!-- point_cloud_object_detector_node -->
     <include file="$(find point_cloud_object_detector)/launch/point_cloud_object_detector.launch" >
+        <arg name="camera_frame_id" default="front_cam_color_optical_frame" />
         <arg name="is_debug"      default="true" />
         <arg name="is_pcl_tf"     default="false" />
         <arg name="is_clustering" default="true" />
@@ -28,12 +29,25 @@
         <arg name="object_distance_threshold" default="0.1" />
         <arg name="map_frame_id"     default="map" />
         <arg name="base_link_frame_id" default="base_link" />
-        <arg name="camera_frame_id"  default="base_link" />
-        <arg name="reference_images_path" default="$(find object_identifier)/reference_data/" />
+        <arg name="camera_frame_id"  default="front_cam_color_optical_frame" />
+        <arg name="reference_images_path" default="$(find object_identifier)/test_reference_data/" />
     </include>
 
     <!-- tf -->
-    <node pkg="tf2_ros" type="static_transform_publisher" name="map_to_base_link" args="0 0 0 0 0 0 1 map base_link" />
-    <node pkg="tf2_ros" type="static_transform_publisher" name="base_link_to_camera" args="0 0 0 0 0 0 1 base_link front_cam_color_optical_frame" />
+    <!-- <node pkg="tf2_ros" type="static_transform_publisher" name="map_to_base_link" args="0 0 0 0 0 0 1 map base_link" /> -->
+    <node pkg="tf2_ros" type="static_transform_publisher" name="base_link_to_camera" args="-0.22 0 0.72 0 0 0 1 base_link front_cam_link" />
+    <!-- <include file="$(find ros_utils)/launch/rosbag_tf_mono.launch" >
+        <arg name="publish_pose" default="true" />
+        <arg name="pose_in_remap" default="amcl_pose" />
+        <arg name="odom_in_remap" default="odom" />
+        <arg name="pose_out_remap" default="robot_pose" />
+        <arg name="map_frame_id" default="map" />
+        <arg name="base_link_frame_id" default="base_link" />
+        <arg name="laser_frame_id" default="laser" />
+        <arg name="camera_frame_id" default="front_cam_color_optical_frame" />
+    </include> -->
+
+    <!-- rviz -->
+    <node pkg="rviz" type="rviz" name="rviz" args="-d $(find object_identifier)/config/rviz/object_tracking_test.rviz" />
 
 </launch>

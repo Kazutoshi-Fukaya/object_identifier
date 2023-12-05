@@ -143,14 +143,14 @@ void ObjectIdentifier::ops_with_img_callback(const object_detector_msgs::ObjectP
         {
             visualization_msgs::Marker marker = create_init_marker();
             marker.id = op.id;
-            marker.pose = get_pose(op.x, op.y);
+            marker.pose = get_pose(op.x, op.y, op.z);
             marker.color = get_color(1.0, 0.0, 0.0);
             marker_array.markers.emplace_back(marker);
 
             visualization_msgs::Marker id_marker = create_init_marker();
             id_marker.type = visualization_msgs::Marker::TEXT_VIEW_FACING;
             id_marker.id = op.id;
-            id_marker.pose = get_pose(op.x, op.y);
+            id_marker.pose = get_pose(op.x, op.y, op.z);
             id_marker.color = get_color(1.0, 1.0, 1.0);
             id_marker.text = std::to_string(op.id);
             id_array.markers.emplace_back(id_marker);
@@ -185,9 +185,9 @@ void ObjectIdentifier::load_reference_images(std::string reference_images_path,s
         try{
             std::string equ_name = static_cast<std::string>(strvec[0]);
             std::string rgb_name = static_cast<std::string>(strvec[1]);
-            int id = static_cast<int>(std::stoi(strvec[2]));
+            int object_id = static_cast<int>(std::stoi(strvec[2]));
 
-            Images images(id);
+            Images images(object_id);
             cv::Mat rgb_image, equ_image;
             if(image_mode == "rgb"){
                 rgb_image = cv::imread(reference_images_path + rgb_name,0);
@@ -256,6 +256,29 @@ void ObjectIdentifier::create_database(std::string reference_images_path,std::st
     std::cout << "=============================" << std::endl;
 }
 
+void ObjectIdentifier::identify_object(const object_detector_msgs::ObjectPositionWithImageConstPtr& input_msg,int& object_id)
+{
+    cv_bridge::CvImagePtr cv_ptr;
+    try
+    {
+        cv_ptr = cv_bridge::toCvCopy(input_msg->img, sensor_msgs::image_encodings::BGR8);
+    }
+    catch(cv_bridge::Exception& ex)
+    {
+        ROS_ERROR("Could not convert to color image");
+        return;
+    }
+
+    std::vector<cv::KeyPoint> keypoints;
+    cv::Mat descriptors;
+    detector_->detectAndCompute(cv_ptr->image, cv::Mat(), keypoints, descriptors);
+
+    QueryResults ret;
+    database_->query(descriptors, ret, 1);
+    if(ret.empty()) return;
+
+}
+
 std::vector<std::string> ObjectIdentifier::split(std::string& input, char delimiter)
 {
     std::istringstream stream(input);
@@ -273,19 +296,19 @@ visualization_msgs::Marker ObjectIdentifier::create_init_marker()
     marker.ns = "object_identifier";
     marker.type = visualization_msgs::Marker::CUBE;
     marker.action = visualization_msgs::Marker::ADD;
-    marker.lifetime = ros::Duration(0.1);
-    marker.scale.x = 0.4;
-    marker.scale.y = 0.4;
+    marker.lifetime = ros::Duration(0.5);
+    marker.scale.x = 0.3;
+    marker.scale.y = 0.3;
     marker.scale.z = 0.6;
     return marker;
 }
 
-geometry_msgs::Pose ObjectIdentifier::get_pose(double x,double y)
+geometry_msgs::Pose ObjectIdentifier::get_pose(double x,double y,double z)
 {
     geometry_msgs::Pose pose;
     pose.position.x = x;
     pose.position.y = y;
-    pose.position.z = 0.0;
+    pose.position.z = z;
     pose.orientation.x = 0.0;
     pose.orientation.y = 0.0;
     pose.orientation.z = 0.0;
@@ -299,7 +322,7 @@ std_msgs::ColorRGBA ObjectIdentifier::get_color(double r,double g,double b)
     color_msg.r = r;
     color_msg.g = g;
     color_msg.b = b;
-    color_msg.a = 1.0;
+    color_msg.a = 0.7;
     return color_msg;
 }
 
