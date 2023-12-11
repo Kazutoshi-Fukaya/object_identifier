@@ -3,6 +3,10 @@
     <arg name="is_id_debug"      default="false" />
     <arg name="use_visualization" default="true" />
     <arg name="use_database"      default="true" />
+    <arg name="use_existing_vocabulary" default="true" />
+    <arg name="use_existing_database" default="true" />
+    <arg name="save_vocabulary"   default="false" />
+    <arg name="save_database"     default="false" />
     <arg name="hz"               default="10" />
     <arg name="object_distance_threshold" default="0.1" />
     <arg name="map_frame_id"     default="map" />
@@ -22,6 +26,12 @@
         <param name="IS_ID_DEBUG"      value="$(arg is_id_debug)" />
         <param name="USE_VISUALIZATION" value="$(arg use_visualization)" />
         <param name="USE_DATABASE"      value="$(arg use_database)" />
+        <param name="USE_EXISTING_VOCABULARY" value="$(arg use_existing_vocabulary)" />
+        <param name="USE_EXISTING_DATABASE" value="$(arg use_existing_database)" />
+        <param name="SAVE_VOCABULARY"   value="$(arg save_vocabulary)" />
+        <param name="SAVE_DATABASE"     value="$(arg save_database)" />
+        <param name="VOCABURALY_K"     value="9" />
+        <param name="VOCABURALY_L"     value="3" />
         <param name="OBJECT_DISTANCE_THRESHOLD" value="$(arg object_distance_threshold)" />
         <param name="MAP_FRAME_ID"     value="$(arg map_frame_id)" />
         <param name="BASE_LINK_FRAME_ID" value="$(arg base_link_frame_id)" />

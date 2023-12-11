@@ -33,7 +33,7 @@ private:
     void load_reference_images(std::string reference_images_path,std::string image_mode);
     void calc_features(Image& image,std::string name,cv::Mat img);
     void create_database(std::string reference_images_path,std::string image_mode,std::string database_name);
-    void identify_object(const object_detector_msgs::ObjectPositionWithImageConstPtr& input_msg,int& object_id);
+    void identify_object(object_detector_msgs::ObjectPositionWithImage input_msg,int& object_id);
     std::vector<std::string> split(std::string& input,char delimiter);
     visualization_msgs::Marker create_init_marker();
     geometry_msgs::Pose get_pose(double x,double y,double z);
@@ -62,7 +62,14 @@ private:
     boost::shared_ptr<tf2_ros::TransformListener> listener_;
 
     object_identifier_msgs::ObjectPositionsWithID last_ops_with_id_;
+    std::vector<object_identifier_msgs::ObjectPositionsWithID> past_ops_with_id_list_;
     int object_id_counter_;
+
+    // features
+    std::vector<cv::Mat> features_;
+
+    // vocabulary
+    dbow3::Vocabulary* vocabulary_;
 
     // database
     dbow3::Database* database_;
@@ -77,13 +84,20 @@ private:
     bool IS_ID_DEBUG_;
     bool USE_VISUALIZATION_;
     bool USE_DATABASE_;
+    bool USE_EXISTING_VOCABULARY_;
+    bool USE_EXISTING_DATABASE_;
+    bool SAVE_VOCABULARY_;
+    bool SAVE_DATABASE_;
     int HZ_;
+    int VOCABULARY_K_;
+    int VOCABULARY_L_;
     double OBJECT_DISTANCE_THRESHOLD_;
     std::string MAP_FRAME_ID_;
     std::string BASE_LINK_FRAME_ID_;
     std::string CAMERA_FRAME_ID_;
     std::string REFERENCE_IMAGES_PATH_;
     std::string IMAGE_MODE_;
+    std::string VOCABULARY_NAME_;
     std::string DATABASE_NAME_;
 };
 }

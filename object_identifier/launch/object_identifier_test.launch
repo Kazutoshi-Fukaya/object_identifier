@@ -3,7 +3,9 @@
     <include file="$(find ros_utils)/launch/test_bag_play.launch"/>
 
     <!-- darknet_ros -->
-    <include file="$(find darknet_ros)/launch/dkan.launch" />
+    <include file="$(find darknet_ros)/launch/dkan.launch" >
+        <arg name="output" default="log" />
+    </include>
 
     <!-- point_cloud_object_detector_node -->
     <include file="$(find point_cloud_object_detector)/launch/point_cloud_object_detector.launch" >
@@ -22,15 +24,19 @@
 
     <!-- object_identifier_node -->
     <include file="$(find object_identifier)/launch/object_identifier.launch" >
-        <arg name="is_id_debug"      default="true" />
+        <arg name="is_id_debug"      default="false" />
         <arg name="use_visualization" default="true" />
-        <arg name="use_database"      default="false" />
+        <arg name="use_database"      default="true" />
+        <arg name="use_existing_vocabulary" default="true" />
+        <arg name="use_existing_database" default="true" />
+        <arg name="save_vocabulary"   default="true" />
+        <arg name="save_database"     default="true" />
         <arg name="hz"               default="10" />
         <arg name="object_distance_threshold" default="0.1" />
         <arg name="map_frame_id"     default="map" />
         <arg name="base_link_frame_id" default="base_link" />
         <arg name="camera_frame_id"  default="front_cam_color_optical_frame" />
-        <arg name="reference_images_path" default="$(find object_identifier)/test_reference_data/" />
+        <arg name="reference_images_path" default="$(find object_identifier)/reference_data/test/" />
     </include>
 
     <!-- tf -->

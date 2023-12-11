@@ -10,7 +10,13 @@ ObjectIdentifier::ObjectIdentifier()
     private_nh_.param("IS_ID_DEBUG", IS_ID_DEBUG_, false);
     private_nh_.param("USE_VISUALIZATION", USE_VISUALIZATION_, false);
     private_nh_.param("USE_DATABASE", USE_DATABASE_, false);
+    private_nh_.param("USE_EXISTING_VOCABULARY", USE_EXISTING_VOCABULARY_, false);
+    private_nh_.param("USE_EXISTING_DATABASE", USE_EXISTING_DATABASE_, false);
+    private_nh_.param("SAVE_VOCABULARY", SAVE_VOCABULARY_, false);
+    private_nh_.param("SAVE_DATABASE", SAVE_DATABASE_, false);
     private_nh_.param("HZ", HZ_, 10);
+    private_nh_.param("VOCABULARY_K", VOCABULARY_K_, 9);
+    private_nh_.param("VOCABULARY_L", VOCABULARY_L_, 3);
     private_nh_.param("OBJECT_DISTANCE_THRESHOLD", OBJECT_DISTANCE_THRESHOLD_, 0.1);
     private_nh_.param("MAP_FRAME_ID", MAP_FRAME_ID_, std::string("map"));
     private_nh_.param("BASE_LINK_FRAME_ID", BASE_LINK_FRAME_ID_, std::string("base_link"));
@@ -24,7 +30,8 @@ ObjectIdentifier::ObjectIdentifier()
     // reference images
     private_nh_.param("REFERENCE_IMAGES_PATH", REFERENCE_IMAGES_PATH_, std::string(""));
     private_nh_.param("IMAGE_MODE", IMAGE_MODE_, std::string("rgb"));
-    private_nh_.param("DATABASE_NAME", DATABASE_NAME_, std::string("/dkan_voc.yml.gz"));
+    private_nh_.param("VOCABULARY_NAME", VOCABULARY_NAME_, std::string("/dkan_voc.yml.gz"));
+    private_nh_.param("DATABASE_NAME", DATABASE_NAME_, std::string("/dkan_db.yml.gz"));
     if(USE_DATABASE_)
     {
         load_reference_images(REFERENCE_IMAGES_PATH_, IMAGE_MODE_);
@@ -95,14 +102,16 @@ void ObjectIdentifier::ops_with_img_callback(const object_detector_msgs::ObjectP
                 }
             }
         }
-        if(IS_ID_DEBUG_)
+        if(nearest_id == -1)
         {
-            if(nearest_id == -1)
+            if (USE_DATABASE_) identify_object(op, nearest_id);
+            else if (IS_ID_DEBUG_)
             {
                 nearest_id = object_id_counter_;
                 object_id_counter_++;
             }
         }
+
         object_identifier_msgs::ObjectPositionWithID op_with_id;
         op_with_id.x = transformed_pose.pose.position.x;
         op_with_id.y = transformed_pose.pose.position.y;
@@ -157,6 +166,7 @@ void ObjectIdentifier::ops_with_img_callback(const object_detector_msgs::ObjectP
         }
         markers_pub_.publish(marker_array);
         id_markers_pub_.publish(id_array);
+        std::cout << "marker_array: " << marker_array.markers.size() << std::endl;
     }
 }
 
@@ -234,34 +244,85 @@ void ObjectIdentifier::calc_features(Image& image,std::string name,cv::Mat img)
 
 void ObjectIdentifier::create_database(std::string reference_images_path,std::string image_mode,std::string database_name)
 {
-    std::cout << "=== Load Database ===" << std::endl;
-    std::string database_file = reference_images_path + image_mode + database_name;
-    std::cout << "load: " << database_file << std::endl;
-    Vocabulary voc(database_file);
-    database_ = new Database(voc,false,0);
-
     if(image_mode == "rgb"){
-        for(const auto &ri : reference_images_) database_->add(ri.rgb.descriptor);
+        for(const auto &ri : reference_images_) features_.emplace_back(ri.rgb.descriptor);
     }
     else if(image_mode == "equ"){
-        for(const auto &ri : reference_images_) database_->add(ri.equ.descriptor);
+        for(const auto &ri : reference_images_) features_.emplace_back(ri.equ.descriptor);
     }
     else{
         ROS_ERROR("No applicable 'image_mode'. Please select 'rgb' or 'equ'");
         return;
     }
 
+    if(USE_EXISTING_DATABASE_){
+        std::cout << "=== Load Database ===" << std::endl;
+        std::string database_file = reference_images_path + image_mode + DATABASE_NAME_;
+        std::cout << "load: " << database_file << std::endl;
+        database_ = new Database(database_file);
+        std::cout << "=== Success to Load Database ===" << std::endl;
+    }
+    else if(USE_EXISTING_VOCABULARY_){
+        std::cout << "=== Load Vocabulary ===" << std::endl;
+        std::string vocabulary_file = reference_images_path + image_mode + VOCABULARY_NAME_;
+        std::cout << "load: " << vocabulary_file << std::endl;
+        vocabulary_ = new Vocabulary(vocabulary_file);
+        std::cout << "=== Success to Load Vocabulary ===" << std::endl;
+    }
+    else{
+        std::cout << "=== Create Vocabulary ===" << std::endl;
+        std::cout << "k: " << VOCABULARY_K_ << std::endl;
+        std::cout << "L: " << VOCABULARY_L_ << std::endl;
+        // Vocabulary voc(VOCABULARY_K_,VOCABULARY_L_,TF_IDF,L1_NORM);
+        vocabulary_ = new Vocabulary(VOCABULARY_K_,VOCABULARY_L_,TF_IDF,L1_NORM);
+        vocabulary_->create(features_);
+        std::cout << "=== Success to Create Vocabulary ===" << std::endl;
+    }
+
+    if(!USE_EXISTING_DATABASE_){
+        database_ = new Database(*vocabulary_,false,0);
+        std::cout << "=== Success to Create Database ===" << std::endl;
+        std::cout << "=== Add Reference Images ===" << std::endl;
+        for(const auto &f : features_) database_->add(f);
+    }
+
+    // if(image_mode == "rgb"){
+    //     for(const auto &ri : reference_images_) database_->add(ri.rgb.descriptor);
+    // }
+    // else if(image_mode == "equ"){
+    //     for(const auto &ri : reference_images_) database_->add(ri.equ.descriptor);
+    // }
+    // else{
+    //     ROS_ERROR("No applicable 'image_mode'. Please select 'rgb' or 'equ'");
+    //     return;
+    // }
+
     // info
     database_->get_info();
+
+    if(SAVE_VOCABULARY_ && !USE_EXISTING_DATABASE_){
+        std::cout << "=== Save Vocabulary ===" << std::endl;
+        std::string vocabulary_file = reference_images_path + image_mode + VOCABULARY_NAME_;
+        std::cout << "save: " << vocabulary_file << std::endl;
+        vocabulary_->save(vocabulary_file);
+        std::cout << "=== Success to Save Vocabulary ===" << std::endl;
+    }
+    if(SAVE_DATABASE_){
+        std::cout << "=== Save Database ===" << std::endl;
+        std::string database_file = reference_images_path + image_mode + DATABASE_NAME_;
+        std::cout << "save: " << database_file << std::endl;
+        database_->save(database_file);
+        std::cout << "=== Success to Save Database ===" << std::endl;
+    }
     std::cout << "=============================" << std::endl;
 }
 
-void ObjectIdentifier::identify_object(const object_detector_msgs::ObjectPositionWithImageConstPtr& input_msg,int& object_id)
+void ObjectIdentifier::identify_object(object_detector_msgs::ObjectPositionWithImage input_msg,int& object_id)
 {
     cv_bridge::CvImagePtr cv_ptr;
     try
     {
-        cv_ptr = cv_bridge::toCvCopy(input_msg->img, sensor_msgs::image_encodings::BGR8);
+        cv_ptr = cv_bridge::toCvCopy(input_msg.img, sensor_msgs::image_encodings::BGR8);
     }
     catch(cv_bridge::Exception& ex)
     {
@@ -274,8 +335,9 @@ void ObjectIdentifier::identify_object(const object_detector_msgs::ObjectPositio
     detector_->detectAndCompute(cv_ptr->image, cv::Mat(), keypoints, descriptors);
 
     QueryResults ret;
-    database_->query(descriptors, ret, 1);
+    database_->query(descriptors, ret, 4);
     if(ret.empty()) return;
+    object_id = ret.at(0).id;
 
 }
 

@@ -9,6 +9,7 @@ Panels:
         - /MarkerArray1
         - /MarkerArray2
         - /MarkerArray2/Namespaces1
+        - /PointCloud21
       Splitter Ratio: 0.5
     Tree Height: 719
   - Class: rviz/Selection
@@ -122,7 +123,7 @@ Visualization Manager:
       Queue Size: 10
       Selectable: true
       Size (Pixels): 3
-      Size (m): 0.009999999776482582
+      Size (m): 0.0020000000949949026
       Style: Flat Squares
       Topic: /front_cam/camera/depth_registered/points
       Unreliable: false
