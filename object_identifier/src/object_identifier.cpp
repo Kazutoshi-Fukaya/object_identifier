@@ -17,6 +17,8 @@ ObjectIdentifier::ObjectIdentifier()
     private_nh_.param("HZ", HZ_, 10);
     private_nh_.param("VOCABULARY_K", VOCABULARY_K_, 9);
     private_nh_.param("VOCABULARY_L", VOCABULARY_L_, 3);
+    private_nh_.param("TRACKING_FRAME_NUM", TRACKING_FRAME_NUM_, 6);
+    private_nh_.param("TRACKING_THRESHOLD_NUM", TRACKING_THRESHOLD_NUM_, 3);
     private_nh_.param("OBJECT_DISTANCE_THRESHOLD", OBJECT_DISTANCE_THRESHOLD_, 0.1);
     private_nh_.param("MAP_FRAME_ID", MAP_FRAME_ID_, std::string("map"));
     private_nh_.param("BASE_LINK_FRAME_ID", BASE_LINK_FRAME_ID_, std::string("base_link"));
@@ -88,21 +90,46 @@ void ObjectIdentifier::ops_with_img_callback(const object_detector_msgs::ObjectP
         geometry_msgs::PoseStamped transformed_pose;
         tf2::doTransform(relative_pose, transformed_pose, transform_stamped);
 
+        // int nearest_id = -1;
+        // double nearest_distance = 1000000;
+        // for(const auto &last_op : last_ops_with_id_.object_positions_with_id)
+        // {
+        //     double distance = sqrt(pow(last_op.x - transformed_pose.pose.position.x, 2) + pow(last_op.y - transformed_pose.pose.position.y, 2) + pow(last_op.z - transformed_pose.pose.position.z, 2));
+        //     if(distance < OBJECT_DISTANCE_THRESHOLD_)
+        //     {
+        //         if(distance < nearest_distance)
+        //         {
+        //             nearest_id = last_op.id;
+        //             nearest_distance = distance;
+        //         }
+        //     }
+        // }
         int nearest_id = -1;
-        double nearest_distance = 1000000;
-        for(const auto &last_op : last_ops_with_id_.object_positions_with_id)
+        int frame_count = 0;
+        for(const auto &past_ops_with_id : past_ops_with_id_list_)
         {
-            double distance = sqrt(pow(last_op.x - transformed_pose.pose.position.x, 2) + pow(last_op.y - transformed_pose.pose.position.y, 2) + pow(last_op.z - transformed_pose.pose.position.z, 2));
-            if(distance < OBJECT_DISTANCE_THRESHOLD_)
+            double nearest_distance = 1000000;
+            bool is_found = false;
+            for(const auto &past_op : past_ops_with_id.object_positions_with_id)
             {
-                if(distance < nearest_distance)
+                if((past_op.x - transformed_pose.pose.position.x) > OBJECT_DISTANCE_THRESHOLD_) continue;
+                if((past_op.y - transformed_pose.pose.position.y) > OBJECT_DISTANCE_THRESHOLD_) continue;
+                if((past_op.z - transformed_pose.pose.position.z) > OBJECT_DISTANCE_THRESHOLD_) continue;
+                double distance = sqrt(pow(past_op.x - transformed_pose.pose.position.x, 2) + pow(past_op.y - transformed_pose.pose.position.y, 2) + pow(past_op.z - transformed_pose.pose.position.z, 2));
+                if(distance < OBJECT_DISTANCE_THRESHOLD_)
                 {
-                    nearest_id = last_op.id;
-                    nearest_distance = distance;
+                    is_found = true;
+                    if(distance < nearest_distance)
+                    {
+                        nearest_id = past_op.id;
+                        nearest_distance = distance;
+                    }
                 }
             }
+            if(is_found) frame_count++;
         }
-        if(nearest_id == -1)
+        std::cout << "frame_count: " << frame_count << std::endl;
+        if((nearest_id == -1) && (frame_count >= TRACKING_THRESHOLD_NUM_))
         {
             if (USE_DATABASE_) identify_object(op, nearest_id);
             else if (IS_ID_DEBUG_)
@@ -132,7 +159,9 @@ void ObjectIdentifier::ops_with_img_callback(const object_detector_msgs::ObjectP
     ops_with_id_out_.publish(ops_with_id);
     rops_with_id_out_.publish(rops_with_id);
 
-    last_ops_with_id_ = ops_with_id;
+    // last_ops_with_id_ = ops_with_id;
+    past_ops_with_id_list_.push_back(ops_with_id);
+    if(past_ops_with_id_list_.size() > TRACKING_FRAME_NUM_) past_ops_with_id_list_.erase(past_ops_with_id_list_.begin());
 
     if(IS_ID_DEBUG_)
     {
@@ -285,17 +314,6 @@ void ObjectIdentifier::create_database(std::string reference_images_path,std::st
         std::cout << "=== Add Reference Images ===" << std::endl;
         for(const auto &f : features_) database_->add(f);
     }
-
-    // if(image_mode == "rgb"){
-    //     for(const auto &ri : reference_images_) database_->add(ri.rgb.descriptor);
-    // }
-    // else if(image_mode == "equ"){
-    //     for(const auto &ri : reference_images_) database_->add(ri.equ.descriptor);
-    // }
-    // else{
-    //     ROS_ERROR("No applicable 'image_mode'. Please select 'rgb' or 'equ'");
-    //     return;
-    // }
 
     // info
     database_->get_info();

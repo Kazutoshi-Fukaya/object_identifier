@@ -91,6 +91,8 @@ private:
     int HZ_;
     int VOCABULARY_K_;
     int VOCABULARY_L_;
+    int TRACKING_FRAME_NUM_;
+    int TRACKING_THRESHOLD_NUM_;
     double OBJECT_DISTANCE_THRESHOLD_;
     std::string MAP_FRAME_ID_;
     std::string BASE_LINK_FRAME_ID_;

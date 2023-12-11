@@ -8,6 +8,8 @@
     <arg name="save_vocabulary"   default="false" />
     <arg name="save_database"     default="false" />
     <arg name="hz"               default="10" />
+    <arg name="tracking_frame_num" default="6" />
+    <arg name="tracking_threshold_num" default="3" />
     <arg name="object_distance_threshold" default="0.1" />
     <arg name="map_frame_id"     default="map" />
     <arg name="base_link_frame_id" default="base_link" />
@@ -32,6 +34,8 @@
         <param name="SAVE_DATABASE"     value="$(arg save_database)" />
         <param name="VOCABURALY_K"     value="9" />
         <param name="VOCABURALY_L"     value="3" />
+        <param name="TRACKING_FRAME_NUM" value="$(arg tracking_frame_num)" />
+        <param name="TRACKING_THRESHOLD_NUM" value="$(arg tracking_threshold_num)" />
         <param name="OBJECT_DISTANCE_THRESHOLD" value="$(arg object_distance_threshold)" />
         <param name="MAP_FRAME_ID"     value="$(arg map_frame_id)" />
         <param name="BASE_LINK_FRAME_ID" value="$(arg base_link_frame_id)" />

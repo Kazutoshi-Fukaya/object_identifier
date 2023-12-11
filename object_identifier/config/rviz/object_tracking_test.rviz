@@ -123,7 +123,7 @@ Visualization Manager:
       Queue Size: 10
       Selectable: true
       Size (Pixels): 3
-      Size (m): 0.0020000000949949026
+      Size (m): 0.004000000189989805
       Style: Flat Squares
       Topic: /front_cam/camera/depth_registered/points
       Unreliable: false
