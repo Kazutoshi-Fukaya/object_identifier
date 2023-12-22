@@ -14,12 +14,15 @@ ObjectIdentifier::ObjectIdentifier()
     private_nh_.param("USE_EXISTING_DATABASE", USE_EXISTING_DATABASE_, false);
     private_nh_.param("SAVE_VOCABULARY", SAVE_VOCABULARY_, false);
     private_nh_.param("SAVE_DATABASE", SAVE_DATABASE_, false);
+    private_nh_.param("ADD_NEW_OBJECT", ADD_NEW_OBJECT_, false);
     private_nh_.param("HZ", HZ_, 10);
     private_nh_.param("VOCABULARY_K", VOCABULARY_K_, 9);
     private_nh_.param("VOCABULARY_L", VOCABULARY_L_, 3);
     private_nh_.param("TRACKING_FRAME_NUM", TRACKING_FRAME_NUM_, 6);
     private_nh_.param("TRACKING_THRESHOLD_NUM", TRACKING_THRESHOLD_NUM_, 3);
+    private_nh_.param("DATABASE_MAX_RESULTS", DATABASE_MAX_RESULTS_, 4);
     private_nh_.param("OBJECT_DISTANCE_THRESHOLD", OBJECT_DISTANCE_THRESHOLD_, 0.1);
+    private_nh_.param("OBJECT_SEARCH_RADIUS", OBJECT_SEARCH_RADIUS_, 3.0);
     private_nh_.param("MAP_FRAME_ID", MAP_FRAME_ID_, std::string("map"));
     private_nh_.param("BASE_LINK_FRAME_ID", BASE_LINK_FRAME_ID_, std::string("base_link"));
     private_nh_.param("CAMERA_FRAME_ID", CAMERA_FRAME_ID_, std::string("base_link"));
@@ -31,13 +34,12 @@ ObjectIdentifier::ObjectIdentifier()
 
     // reference images
     private_nh_.param("REFERENCE_IMAGES_PATH", REFERENCE_IMAGES_PATH_, std::string(""));
-    private_nh_.param("IMAGE_MODE", IMAGE_MODE_, std::string("rgb"));
     private_nh_.param("VOCABULARY_NAME", VOCABULARY_NAME_, std::string("/dkan_voc.yml.gz"));
     private_nh_.param("DATABASE_NAME", DATABASE_NAME_, std::string("/dkan_db.yml.gz"));
     if(USE_DATABASE_)
     {
-        load_reference_images(REFERENCE_IMAGES_PATH_, IMAGE_MODE_);
-        create_database(REFERENCE_IMAGES_PATH_, IMAGE_MODE_, DATABASE_NAME_);
+        load_reference_images(REFERENCE_IMAGES_PATH_);
+        create_database(REFERENCE_IMAGES_PATH_, DATABASE_NAME_);
     }
 
     // subscriber
@@ -54,6 +56,7 @@ ObjectIdentifier::ObjectIdentifier()
     listener_.reset(new tf2_ros::TransformListener(*buffer_));
 
     object_id_counter_ = 0;
+    object_max_id_ = 0;
 }
 
 ObjectIdentifier::~ObjectIdentifier() {}
@@ -128,10 +131,14 @@ void ObjectIdentifier::ops_with_img_callback(const object_detector_msgs::ObjectP
             }
             if(is_found) frame_count++;
         }
-        std::cout << "frame_count: " << frame_count << std::endl;
+        // std::cout << "frame_count: " << frame_count << std::endl;
         if((nearest_id == -1) && (frame_count >= TRACKING_THRESHOLD_NUM_))
         {
             if (USE_DATABASE_) identify_object(op, nearest_id);
+            else if (ADD_NEW_OBJECT_)
+            {
+
+            }
             else if (IS_ID_DEBUG_)
             {
                 nearest_id = object_id_counter_;
@@ -195,7 +202,7 @@ void ObjectIdentifier::ops_with_img_callback(const object_detector_msgs::ObjectP
         }
         markers_pub_.publish(marker_array);
         id_markers_pub_.publish(id_array);
-        std::cout << "marker_array: " << marker_array.markers.size() << std::endl;
+        // std::cout << "marker_array: " << marker_array.markers.size() << std::endl;
     }
 }
 
@@ -211,7 +218,7 @@ void ObjectIdentifier::set_detector_mode(std::string detector_mode)
     }
 }
 
-void ObjectIdentifier::load_reference_images(std::string reference_images_path,std::string image_mode)
+void ObjectIdentifier::load_reference_images(std::string reference_images_path)
 {
     // load csv file
     std::cout << "=== Load Reference Images ===" << std::endl;
@@ -222,32 +229,20 @@ void ObjectIdentifier::load_reference_images(std::string reference_images_path,s
     while(std::getline(ifs,line)){
         std::vector<std::string> strvec = split(line,',');
         try{
-            std::string equ_name = static_cast<std::string>(strvec[0]);
-            std::string rgb_name = static_cast<std::string>(strvec[1]);
-            int object_id = static_cast<int>(std::stoi(strvec[2]));
+            std::string rgb_name = static_cast<std::string>(strvec[0]);
+            int object_id = static_cast<int>(std::stoi(strvec[1]));
+
+            std::cout << "object_id: " << object_id << std::endl;
+            if(object_id > object_max_id_) object_max_id_ = object_id;
 
             Images images(object_id);
-            cv::Mat rgb_image, equ_image;
-            if(image_mode == "rgb"){
-                rgb_image = cv::imread(reference_images_path + rgb_name,0);
-                if(rgb_image.empty()) break;
-                std::cout << "file_name: " << rgb_name << std::endl;
-                Image rgb;
-                calc_features(rgb,rgb_name,rgb_image);
-                images.set_rgb_image(rgb);
-            }
-            else if(image_mode == "equ"){
-                equ_image = cv::imread(reference_images_path + equ_name,0);
-                if(equ_image.empty()) break;
-                std::cout << "file name: " << equ_name << std::endl;
-                Image equ;
-                calc_features(equ,equ_name,equ_image);
-                images.set_equ_image(equ);
-            }
-            else{
-                ROS_ERROR("No applicable 'image_mode'. Please select 'rgb' or 'equ'");
-                return;
-            }
+            cv::Mat rgb_image;
+            rgb_image = cv::imread(reference_images_path + rgb_name,0);
+            if(rgb_image.empty()) break;
+            std::cout << "file_name: " << rgb_name << std::endl;
+            Image rgb;
+            calc_features(rgb,rgb_name,rgb_image);
+            images.set_rgb_image(rgb);
             reference_images_.emplace_back(images);
         }
         catch(const std::invalid_argument& e){
@@ -271,18 +266,9 @@ void ObjectIdentifier::calc_features(Image& image,std::string name,cv::Mat img)
     image.set_params(name,img,keypoints,descriptors);
 }
 
-void ObjectIdentifier::create_database(std::string reference_images_path,std::string image_mode,std::string database_name)
+void ObjectIdentifier::create_database(std::string reference_images_path,std::string database_name)
 {
-    if(image_mode == "rgb"){
-        for(const auto &ri : reference_images_) features_.emplace_back(ri.rgb.descriptor);
-    }
-    else if(image_mode == "equ"){
-        for(const auto &ri : reference_images_) features_.emplace_back(ri.equ.descriptor);
-    }
-    else{
-        ROS_ERROR("No applicable 'image_mode'. Please select 'rgb' or 'equ'");
-        return;
-    }
+    for(const auto &ri : reference_images_) features_.emplace_back(ri.rgb.descriptor);
 
     if(USE_EXISTING_DATABASE_){
         std::cout << "=== Load Database ===" << std::endl;
@@ -353,10 +339,11 @@ void ObjectIdentifier::identify_object(object_detector_msgs::ObjectPositionWithI
     detector_->detectAndCompute(cv_ptr->image, cv::Mat(), keypoints, descriptors);
 
     QueryResults ret;
-    database_->query(descriptors, ret, 4);
+    database_->query(descriptors, ret, DATABASE_MAX_RESULTS_);
+    std::cout << "ret: " << ret.size() << std::endl;
     if(ret.empty()) return;
-    object_id = ret.at(0).id;
-
+    // object_id = ret.at(0).id;
+    object_id = reference_images_.at(ret.at(0).id).id;
 }
 
 std::vector<std::string> ObjectIdentifier::split(std::string& input, char delimiter)
