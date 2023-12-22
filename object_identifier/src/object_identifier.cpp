@@ -59,7 +59,26 @@ ObjectIdentifier::ObjectIdentifier()
     object_max_id_ = 0;
 }
 
-ObjectIdentifier::~ObjectIdentifier() {}
+ObjectIdentifier::~ObjectIdentifier()
+{
+    // save
+    if(SAVE_VOCABULARY_ && !USE_EXISTING_DATABASE_)
+    {
+        std::cout << "=== Save Vocabulary ===" << std::endl;
+        std::string vocabulary_file = REFERENCE_IMAGES_PATH_ + VOCABULARY_NAME_;
+        std::cout << "save: " << vocabulary_file << std::endl;
+        vocabulary_->save(vocabulary_file);
+        std::cout << "=== Success to Save Vocabulary ===" << std::endl;
+    }
+    if(SAVE_DATABASE_)
+    {
+        std::cout << "=== Save Database ===" << std::endl;
+        std::string database_file = REFERENCE_IMAGES_PATH_ + DATABASE_NAME_;
+        std::cout << "save: " << database_file << std::endl;
+        database_->save(database_file);
+        std::cout << "=== Success to Save Database ===" << std::endl;
+    }
+}
 
 void ObjectIdentifier::ops_with_img_callback(const object_detector_msgs::ObjectPositionsWithImageConstPtr& msg)
 {    
@@ -306,20 +325,20 @@ void ObjectIdentifier::create_database(std::string reference_images_path,std::st
     // info
     database_->get_info();
 
-    if(SAVE_VOCABULARY_ && !USE_EXISTING_DATABASE_){
-        std::cout << "=== Save Vocabulary ===" << std::endl;
-        std::string vocabulary_file = reference_images_path + image_mode + VOCABULARY_NAME_;
-        std::cout << "save: " << vocabulary_file << std::endl;
-        vocabulary_->save(vocabulary_file);
-        std::cout << "=== Success to Save Vocabulary ===" << std::endl;
-    }
-    if(SAVE_DATABASE_){
-        std::cout << "=== Save Database ===" << std::endl;
-        std::string database_file = reference_images_path + image_mode + DATABASE_NAME_;
-        std::cout << "save: " << database_file << std::endl;
-        database_->save(database_file);
-        std::cout << "=== Success to Save Database ===" << std::endl;
-    }
+    // if(SAVE_VOCABULARY_ && !USE_EXISTING_DATABASE_){
+    //     std::cout << "=== Save Vocabulary ===" << std::endl;
+    //     std::string vocabulary_file = reference_images_path + image_mode + VOCABULARY_NAME_;
+    //     std::cout << "save: " << vocabulary_file << std::endl;
+    //     vocabulary_->save(vocabulary_file);
+    //     std::cout << "=== Success to Save Vocabulary ===" << std::endl;
+    // }
+    // if(SAVE_DATABASE_){
+    //     std::cout << "=== Save Database ===" << std::endl;
+    //     std::string database_file = reference_images_path + image_mode + DATABASE_NAME_;
+    //     std::cout << "save: " << database_file << std::endl;
+    //     database_->save(database_file);
+    //     std::cout << "=== Success to Save Database ===" << std::endl;
+    // }
     std::cout << "=============================" << std::endl;
 }
 
