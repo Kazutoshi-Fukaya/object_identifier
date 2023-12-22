@@ -34,6 +34,7 @@ private:
     void calc_features(Image& image,std::string name,cv::Mat img);
     void create_database(std::string reference_images_path,std::string database_name);
     void identify_object(object_detector_msgs::ObjectPositionWithImage input_msg,int& object_id);
+    void add_new_image(int object_id,std::string name, sensor_msgs::Image image);
     std::vector<std::string> split(std::string& input,char delimiter);
     visualization_msgs::Marker create_init_marker();
     geometry_msgs::Pose get_pose(double x,double y,double z);

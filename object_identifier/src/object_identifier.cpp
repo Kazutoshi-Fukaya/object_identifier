@@ -268,6 +268,8 @@ void ObjectIdentifier::calc_features(Image& image,std::string name,cv::Mat img)
 
 void ObjectIdentifier::create_database(std::string reference_images_path,std::string database_name)
 {
+    std::string image_mode = "rgb";
+
     for(const auto &ri : reference_images_) features_.emplace_back(ri.rgb.descriptor);
 
     if(USE_EXISTING_DATABASE_){
@@ -344,6 +346,28 @@ void ObjectIdentifier::identify_object(object_detector_msgs::ObjectPositionWithI
     if(ret.empty()) return;
     // object_id = ret.at(0).id;
     object_id = reference_images_.at(ret.at(0).id).id;
+}
+
+void ObjectIdentifier::add_new_image(int object_id,std::string name, sensor_msgs::Image image)
+{
+    cv_bridge::CvImagePtr cv_ptr;
+    try
+    {
+        cv_ptr = cv_bridge::toCvCopy(image, sensor_msgs::image_encodings::BGR8);
+    }
+    catch(cv_bridge::Exception& ex)
+    {
+        ROS_ERROR("Could not convert to color image");
+        return;
+    }
+
+    Images images(object_id);
+    cv::Mat rgb_image;
+    rgb_image = cv_ptr->image;
+    Image rgb;
+    calc_features(rgb,name,rgb_image);
+    images.set_rgb_image(rgb);
+    reference_images_.emplace_back(images);
 }
 
 std::vector<std::string> ObjectIdentifier::split(std::string& input, char delimiter)
