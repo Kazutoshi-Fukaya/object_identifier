@@ -24,7 +24,8 @@ ObjectIdentifier::ObjectIdentifier()
     private_nh_.param("DATABASE_MAX_RESULTS", DATABASE_MAX_RESULTS_, 4);
     private_nh_.param("IMAGE_SAVE_INTERVAL", IMAGE_SAVE_INTERVAL_, 5);
     private_nh_.param("OBJECT_DISTANCE_THRESHOLD", OBJECT_DISTANCE_THRESHOLD_, 0.1);
-    private_nh_.param("OBJECT_SEARCH_RADIUS", OBJECT_SEARCH_RADIUS_, 3.0);
+    private_nh_.param("OBJECT_SEARCH_RADIUS", OBJECT_SEARCH_RADIUS_, 3.0);  //unused
+    private_nh_.param("DETECT_SCORE_THRESHOLD", DETECT_SCORE_THRESHOLD_, 0.1);
     private_nh_.param("MAP_FRAME_ID", MAP_FRAME_ID_, std::string("map"));
     private_nh_.param("BASE_LINK_FRAME_ID", BASE_LINK_FRAME_ID_, std::string("base_link"));
     private_nh_.param("CAMERA_FRAME_ID", CAMERA_FRAME_ID_, std::string("base_link"));
@@ -47,6 +48,7 @@ ObjectIdentifier::ObjectIdentifier()
 
     // subscriber
     ops_with_img_in_ = nh_.subscribe("ops_with_img_in", 1, &ObjectIdentifier::ops_with_img_callback, this);
+    object_map_sub_ = nh_.subscribe("object_map", 1, &ObjectIdentifier::object_map_callback, this);
 
     // publisher
     ops_with_id_out_ = nh_.advertise<object_identifier_msgs::ObjectPositionsWithID>("ops_with_id_out", 1);
@@ -172,8 +174,10 @@ void ObjectIdentifier::ops_with_img_callback(const object_detector_msgs::ObjectP
         // std::cout << "frame_count: " << frame_count << std::endl;
         if((nearest_id == -1) && (frame_count >= TRACKING_THRESHOLD_NUM_))
         {
-            if (USE_DATABASE_) identify_object(op, nearest_id);
-            else if (ADD_NEW_OBJECT_)
+            // if (USE_DATABASE_) identify_object(op, nearest_id);
+            identify_object(op, nearest_id);
+            // else if (ADD_NEW_OBJECT_)
+            if (ADD_NEW_OBJECT_)
             {
                 
             }
@@ -241,6 +245,14 @@ void ObjectIdentifier::ops_with_img_callback(const object_detector_msgs::ObjectP
         markers_pub_.publish(marker_array);
         id_markers_pub_.publish(id_array);
         // std::cout << "marker_array: " << marker_array.markers.size() << std::endl;
+    }
+}
+
+void ObjectIdentifier::object_map_callback(const multi_localizer_msgs::ObjectMapConstPtr& msg)
+{
+    for(auto &object_data : msg->data)
+    {
+        object_map_.emplace(object_data.id, object_data);
     }
 }
 
@@ -363,27 +375,60 @@ void ObjectIdentifier::create_database(std::string reference_images_path,std::st
 
 void ObjectIdentifier::identify_object(object_detector_msgs::ObjectPositionWithImage input_msg,int& object_id)
 {
-    cv_bridge::CvImagePtr cv_ptr;
-    try
-    {
-        cv_ptr = cv_bridge::toCvCopy(input_msg.img, sensor_msgs::image_encodings::BGR8);
-    }
-    catch(cv_bridge::Exception& ex)
-    {
-        ROS_ERROR("Could not convert to color image");
-        return;
+    if(USE_DATABASE_){
+        cv_bridge::CvImagePtr cv_ptr;
+        try
+        {
+            cv_ptr = cv_bridge::toCvCopy(input_msg.img, sensor_msgs::image_encodings::BGR8);
+        }
+        catch(cv_bridge::Exception& ex)
+        {
+            ROS_ERROR("Could not convert to color image");
+            return;
+        }
+
+        std::vector<cv::KeyPoint> keypoints;
+        cv::Mat descriptors;
+        detector_->detectAndCompute(cv_ptr->image, cv::Mat(), keypoints, descriptors);
+
+        QueryResults ret;
+        database_->query(descriptors, ret, DATABASE_MAX_RESULTS_);
+        std::cout << "ret: " << ret.size() << std::endl;
+        if(ret.empty()) return;
+        // object_id = reference_images_.at(ret.at(0).id).id;
+
+        object_id = -1;
+        for(auto &r : ret)
+        {
+            if(r.score < DETECT_SCORE_THRESHOLD_) continue;
+
+            int ret_id = reference_images_.at(r.id).id;
+            double ret_x = object_map_.at(ret_id).x;
+            double ret_y = object_map_.at(ret_id).y;
+            double obj_x = input_msg.x;
+            double obj_y = input_msg.y;
+            double distance = sqrt(pow(ret_x - obj_x, 2) + pow(ret_y - obj_y, 2));
+            if(distance < input_msg.error)
+            {
+                object_id = reference_images_.at(r.id).id;
+                std::cout << "ret_score: " << r.score << std::endl;
+                break;
+            }
+        }
+        if(object_id != -1) return;
     }
 
-    std::vector<cv::KeyPoint> keypoints;
-    cv::Mat descriptors;
-    detector_->detectAndCompute(cv_ptr->image, cv::Mat(), keypoints, descriptors);
-
-    QueryResults ret;
-    database_->query(descriptors, ret, DATABASE_MAX_RESULTS_);
-    std::cout << "ret: " << ret.size() << std::endl;
-    if(ret.empty()) return;
-    // object_id = ret.at(0).id;
-    object_id = reference_images_.at(ret.at(0).id).id;
+    // search nearest object
+    double nearest_distance = 1000000;
+    for(const auto &od : object_map_)
+    {
+        double distance = sqrt(pow(od.second.x - input_msg.x, 2) + pow(od.second.y - input_msg.y, 2));
+        if(distance < nearest_distance)
+        {
+            nearest_distance = distance;
+            object_id = od.first;
+        }
+    }
 }
 
 void ObjectIdentifier::add_new_image(int object_id,std::string name, sensor_msgs::Image image)

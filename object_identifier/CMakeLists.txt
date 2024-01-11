@@ -13,6 +13,7 @@ find_package(catkin REQUIRED COMPONENTS
   visualization_msgs
   object_detector_msgs
   object_identifier_msgs
+  multi_localizer_msgs
 )
 
 # OpenCV

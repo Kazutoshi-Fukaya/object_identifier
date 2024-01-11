@@ -19,6 +19,7 @@
 // Custom msg
 #include "object_detector_msgs/ObjectPositionsWithImage.h"
 #include "object_identifier_msgs/ObjectPositionsWithID.h"
+#include "multi_localizer_msgs/ObjectMap.h"
 
 namespace object_identifier
 {
@@ -49,6 +50,7 @@ private:
     // subscriber
     ros::Subscriber ops_with_img_in_;
     ros::Subscriber odom_sub_;
+    ros::Subscriber object_map_sub_;
 
     // publisher
     ros::Publisher ops_with_id_out_;
@@ -59,6 +61,7 @@ private:
     // callback
     void ops_with_img_callback(const object_detector_msgs::ObjectPositionsWithImageConstPtr& msg);
     // void odom_callback(const nav_msgs::OdometryConstPtr& msg);
+    void object_map_callback(const multi_localizer_msgs::ObjectMapConstPtr& msg);
 
     // tf
     boost::shared_ptr<tf2_ros::Buffer> buffer_;
@@ -66,6 +69,7 @@ private:
 
     object_identifier_msgs::ObjectPositionsWithID last_ops_with_id_;
     std::vector<object_identifier_msgs::ObjectPositionsWithID> past_ops_with_id_list_;
+    std::map <int, multi_localizer_msgs::ObjectData> object_map_;
     int object_id_counter_;
     int object_max_id_;
     int added_images_num_;
@@ -104,7 +108,8 @@ private:
     int DATABASE_MAX_RESULTS_;
     int IMAGE_SAVE_INTERVAL_;           //[sub]
     double OBJECT_DISTANCE_THRESHOLD_;
-    double OBJECT_SEARCH_RADIUS_;
+    double OBJECT_SEARCH_RADIUS_;       //unused
+    double DETECT_SCORE_THRESHOLD_;
     std::string MAP_FRAME_ID_;
     std::string BASE_LINK_FRAME_ID_;
     std::string CAMERA_FRAME_ID_;

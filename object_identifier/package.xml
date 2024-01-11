@@ -26,6 +26,7 @@
   <depend>visualization_msgs</depend>
   <depend>object_detector_msgs</depend>
   <depend>object_identifier_msgs</depend>
+  <depend>multi_localizer_msgs</depend>
   <!-- <exec_depend>roscpp</exec_depend>
   <exec_depend>rospy</exec_depend>
   <exec_depend>sensor_msgs</exec_depend>
