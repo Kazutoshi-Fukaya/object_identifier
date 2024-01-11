@@ -14,6 +14,7 @@
     <arg name="database_max_results" default="4" />
     <arg name="object_distance_threshold" default="0.1" />
     <arg name="object_search_radius" default="3.0" />
+    <arg name="detect_score_threshold" default="0.1" />
     <arg name="map_frame_id"     default="map" />
     <arg name="base_link_frame_id" default="base_link" />
     <arg name="camera_frame_id"  default="base_link" />
@@ -45,6 +46,7 @@
         <param name="DATABASE_MAX_RESULTS" value="$(arg database_max_results)" />
         <param name="OBJECT_DISTANCE_THRESHOLD" value="$(arg object_distance_threshold)" />
         <param name="OBJECT_SEARCH_RADIUS" value="$(arg object_search_radius)" />
+        <param name="DETECT_SCORE_THRESHOLD" value="$(arg detect_score_threshold)" />
         <param name="MAP_FRAME_ID"     value="$(arg map_frame_id)" />
         <param name="BASE_LINK_FRAME_ID" value="$(arg base_link_frame_id)" />
         <param name="CAMERA_FRAME_ID"  value="$(arg camera_frame_id)" />

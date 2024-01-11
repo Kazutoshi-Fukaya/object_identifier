@@ -19,6 +19,7 @@
         <arg name="sampling_ratio"  default="0.3" />
         <arg name="min_cluster_size"  default="30" />
         <arg name="use_img_msg"   default="true" />
+        <arg name="error_per_distance" default="0.05" />
         <arg name="hz"            default="10" />
     </include>
 
@@ -38,6 +39,7 @@
         <arg name="database_max_results" default="10" />
         <arg name="object_distance_threshold" default="0.2" />
         <arg name="object_search_radius" default="3.0" />
+        <arg name="detect_score_threshold" default="0.1" />
         <arg name="map_frame_id"     default="map" />
         <arg name="base_link_frame_id" default="base_link" />
         <arg name="camera_frame_id"  default="front_cam_color_optical_frame" />
