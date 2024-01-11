@@ -14,6 +14,7 @@ ObjectIdentifier::ObjectIdentifier()
     private_nh_.param("USE_EXISTING_DATABASE", USE_EXISTING_DATABASE_, false);
     private_nh_.param("SAVE_VOCABULARY", SAVE_VOCABULARY_, false);
     private_nh_.param("SAVE_DATABASE", SAVE_DATABASE_, false);
+    private_nh_.param("SAVE_REFERENCE_DATA", SAVE_REFERENCE_DATA_, false);
     private_nh_.param("ADD_NEW_OBJECT", ADD_NEW_OBJECT_, false);
     private_nh_.param("HZ", HZ_, 10);
     private_nh_.param("VOCABULARY_K", VOCABULARY_K_, 9);
@@ -21,6 +22,7 @@ ObjectIdentifier::ObjectIdentifier()
     private_nh_.param("TRACKING_FRAME_NUM", TRACKING_FRAME_NUM_, 6);
     private_nh_.param("TRACKING_THRESHOLD_NUM", TRACKING_THRESHOLD_NUM_, 3);
     private_nh_.param("DATABASE_MAX_RESULTS", DATABASE_MAX_RESULTS_, 4);
+    private_nh_.param("IMAGE_SAVE_INTERVAL", IMAGE_SAVE_INTERVAL_, 5);
     private_nh_.param("OBJECT_DISTANCE_THRESHOLD", OBJECT_DISTANCE_THRESHOLD_, 0.1);
     private_nh_.param("OBJECT_SEARCH_RADIUS", OBJECT_SEARCH_RADIUS_, 3.0);
     private_nh_.param("MAP_FRAME_ID", MAP_FRAME_ID_, std::string("map"));
@@ -34,6 +36,7 @@ ObjectIdentifier::ObjectIdentifier()
 
     // reference images
     private_nh_.param("REFERENCE_IMAGES_PATH", REFERENCE_IMAGES_PATH_, std::string(""));
+    private_nh_.param("SAVE_FILE_PATH", SAVE_FILE_PATH_, std::string(""));
     private_nh_.param("VOCABULARY_NAME", VOCABULARY_NAME_, std::string("/dkan_voc.yml.gz"));
     private_nh_.param("DATABASE_NAME", DATABASE_NAME_, std::string("/dkan_db.yml.gz"));
     if(USE_DATABASE_)
@@ -57,10 +60,14 @@ ObjectIdentifier::ObjectIdentifier()
 
     object_id_counter_ = 0;
     object_max_id_ = 0;
+    added_images_num_ = 0;
+    ops_sub_counter_ = 0;
 }
 
 ObjectIdentifier::~ObjectIdentifier()
 {
+    std::cout << "=== ObjectIdentifier Destructor ===" << std::endl;
+
     // save
     if(SAVE_VOCABULARY_ && !USE_EXISTING_DATABASE_)
     {
@@ -78,10 +85,22 @@ ObjectIdentifier::~ObjectIdentifier()
         database_->save(database_file);
         std::cout << "=== Success to Save Database ===" << std::endl;
     }
+
+    if(SAVE_REFERENCE_DATA_)
+    {
+        std::cout << "reference_images_.size(): " << reference_images_.size() << std::endl;
+        save_images();
+        save_text_file();
+        std::cout << "=== Success to Save Reference Data ===" << std::endl;
+    }
+
+    std::cout << "=== Success to ObjectIdentifier Destructor ===" << std::endl;
 }
 
 void ObjectIdentifier::ops_with_img_callback(const object_detector_msgs::ObjectPositionsWithImageConstPtr& msg)
 {    
+    ops_sub_counter_++;
+
     geometry_msgs::TransformStamped transform_stamped;
     try
     {
@@ -156,7 +175,7 @@ void ObjectIdentifier::ops_with_img_callback(const object_detector_msgs::ObjectP
             if (USE_DATABASE_) identify_object(op, nearest_id);
             else if (ADD_NEW_OBJECT_)
             {
-
+                
             }
             else if (IS_ID_DEBUG_)
             {
@@ -387,6 +406,33 @@ void ObjectIdentifier::add_new_image(int object_id,std::string name, sensor_msgs
     calc_features(rgb,name,rgb_image);
     images.set_rgb_image(rgb);
     reference_images_.emplace_back(images);
+}
+
+void ObjectIdentifier::save_images()
+{
+    // save reference images
+    int count = 0;
+    for (auto &ri : reference_images_)
+    {
+        std::string rgb_name = "image" + std::to_string(count) + ".jpg";
+        cv::imwrite(SAVE_FILE_PATH_ + rgb_name, ri.rgb.img);
+        count++;
+    }
+}
+
+void ObjectIdentifier::save_text_file()
+{
+    // save csv file
+    std::string file_name = SAVE_FILE_PATH_ + "save.txt";
+    std::ofstream ofs(file_name);
+    int count = 0;
+    for (auto &ri : reference_images_)
+    {
+        std::string rgb_name = "image" + std::to_string(count) + ".jpg";
+        ofs << rgb_name << "," << ri.id << std::endl;
+        count++;
+    }
+    ofs.close();
 }
 
 std::vector<std::string> ObjectIdentifier::split(std::string& input, char delimiter)

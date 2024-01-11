@@ -27,18 +27,23 @@
         <arg name="is_id_debug"      default="true" />
         <arg name="use_visualization" default="true" />
         <arg name="use_database"      default="false" />
-        <arg name="use_existing_vocabulary" default="true" />
-        <arg name="use_existing_database" default="true" />
-        <arg name="save_vocabulary"   default="true" />
-        <arg name="save_database"     default="true" />
+        <arg name="use_existing_vocabulary" default="false" />
+        <arg name="use_existing_database" default="false" />
+        <arg name="save_vocabulary"   default="false" />
+        <arg name="save_database"     default="false" />
+        <arg name="save_reference_data" default="false" />
         <arg name="hz"               default="10" />
         <arg name="tracking_frame_num" default="8" />
         <arg name="tracking_threshold_num" default="3" />
+        <arg name="database_max_results" default="10" />
         <arg name="object_distance_threshold" default="0.2" />
+        <arg name="object_search_radius" default="3.0" />
         <arg name="map_frame_id"     default="map" />
         <arg name="base_link_frame_id" default="base_link" />
         <arg name="camera_frame_id"  default="front_cam_color_optical_frame" />
         <arg name="reference_images_path" default="$(find object_identifier)/reference_data/test/" />
+        <!-- <arg name="save_file_path" default="home/amsl/catkin_ws/src/lifelong_localization/reference_data/save_image_test/" /> -->
+        <arg name="save_file_path" default="$(find object_identifier)/reference_data/save_image_test/" />
     </include>
 
     <!-- tf -->

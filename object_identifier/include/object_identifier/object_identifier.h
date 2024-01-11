@@ -35,6 +35,8 @@ private:
     void create_database(std::string reference_images_path,std::string database_name);
     void identify_object(object_detector_msgs::ObjectPositionWithImage input_msg,int& object_id);
     void add_new_image(int object_id,std::string name, sensor_msgs::Image image);
+    void save_images();
+    void save_text_file();
     std::vector<std::string> split(std::string& input,char delimiter);
     visualization_msgs::Marker create_init_marker();
     geometry_msgs::Pose get_pose(double x,double y,double z);
@@ -66,6 +68,8 @@ private:
     std::vector<object_identifier_msgs::ObjectPositionsWithID> past_ops_with_id_list_;
     int object_id_counter_;
     int object_max_id_;
+    int added_images_num_;
+    int ops_sub_counter_;
 
     // features
     std::vector<cv::Mat> features_;
@@ -90,6 +94,7 @@ private:
     bool USE_EXISTING_DATABASE_;
     bool SAVE_VOCABULARY_;
     bool SAVE_DATABASE_;
+    bool SAVE_REFERENCE_DATA_;
     bool ADD_NEW_OBJECT_;
     int HZ_;
     int VOCABULARY_K_;
@@ -97,12 +102,14 @@ private:
     int TRACKING_FRAME_NUM_;
     int TRACKING_THRESHOLD_NUM_;
     int DATABASE_MAX_RESULTS_;
+    int IMAGE_SAVE_INTERVAL_;           //[sub]
     double OBJECT_DISTANCE_THRESHOLD_;
     double OBJECT_SEARCH_RADIUS_;
     std::string MAP_FRAME_ID_;
     std::string BASE_LINK_FRAME_ID_;
     std::string CAMERA_FRAME_ID_;
     std::string REFERENCE_IMAGES_PATH_;
+    std::string SAVE_FILE_PATH_;
     std::string VOCABULARY_NAME_;
     std::string DATABASE_NAME_;
 };

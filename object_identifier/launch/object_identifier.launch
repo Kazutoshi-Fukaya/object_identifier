@@ -7,14 +7,19 @@
     <arg name="use_existing_database" default="true" />
     <arg name="save_vocabulary"   default="false" />
     <arg name="save_database"     default="false" />
+    <arg name="save_reference_data" default="false" />
     <arg name="hz"               default="10" />
     <arg name="tracking_frame_num" default="6" />
     <arg name="tracking_threshold_num" default="3" />
+    <arg name="database_max_results" default="4" />
     <arg name="object_distance_threshold" default="0.1" />
+    <arg name="object_search_radius" default="3.0" />
     <arg name="map_frame_id"     default="map" />
     <arg name="base_link_frame_id" default="base_link" />
     <arg name="camera_frame_id"  default="base_link" />
     <arg name="reference_images_path" default="$(find object_identifier)/reference_data/" />
+    <!-- <arg name="save_file_path" default="home/amsl/catkin_ws/src/lifelong_localization/reference_data/save_image_test/" /> -->
+    <arg name="save_file_path" default="$(find object_identifier)/reference_data/added_images/" />
 
     <!-- object_identifier_node -->
     <node pkg="object_identifier" type="object_identifier_node" name="object_identifier" output="screen" >
@@ -32,14 +37,18 @@
         <param name="USE_EXISTING_DATABASE" value="$(arg use_existing_database)" />
         <param name="SAVE_VOCABULARY"   value="$(arg save_vocabulary)" />
         <param name="SAVE_DATABASE"     value="$(arg save_database)" />
+        <param name="SAVE_REFERENCE_DATA" value="$(arg save_reference_data)" />
         <param name="VOCABURALY_K"     value="9" />
         <param name="VOCABURALY_L"     value="3" />
         <param name="TRACKING_FRAME_NUM" value="$(arg tracking_frame_num)" />
         <param name="TRACKING_THRESHOLD_NUM" value="$(arg tracking_threshold_num)" />
+        <param name="DATABASE_MAX_RESULTS" value="$(arg database_max_results)" />
         <param name="OBJECT_DISTANCE_THRESHOLD" value="$(arg object_distance_threshold)" />
+        <param name="OBJECT_SEARCH_RADIUS" value="$(arg object_search_radius)" />
         <param name="MAP_FRAME_ID"     value="$(arg map_frame_id)" />
         <param name="BASE_LINK_FRAME_ID" value="$(arg base_link_frame_id)" />
         <param name="CAMERA_FRAME_ID"  value="$(arg camera_frame_id)" />
         <param name="REFERENCE_IMAGES_PATH" value="$(arg reference_images_path)" />
+        <param name="SAVE_FILE_PATH" value="$(arg save_file_path)" />
     </node>
 </launch>
