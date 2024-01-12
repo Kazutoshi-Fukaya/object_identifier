@@ -7,6 +7,12 @@
         <arg name="output" default="log" />
     </include>
 
+    <!-- dom_estimator_node-->
+    <include file="$(find dom_estimator)/launch/dom_estimator_node.launch" >
+        <arg name="is_debug" default="false" />
+        <arg name="is_record" default="false" />
+    </include>
+
     <!-- point_cloud_object_detector_node -->
     <include file="$(find point_cloud_object_detector)/launch/point_cloud_object_detector.launch" >
         <arg name="camera_frame_id" default="front_cam_color_optical_frame" />
