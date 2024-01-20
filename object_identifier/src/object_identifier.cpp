@@ -172,10 +172,15 @@ void ObjectIdentifier::ops_with_img_callback(const object_detector_msgs::ObjectP
             if(is_found) frame_count++;
         }
         // std::cout << "frame_count: " << frame_count << std::endl;
-        if((nearest_id == -1) && (frame_count >= TRACKING_THRESHOLD_NUM_))
+
+        // if((nearest_id == -1) && (frame_count >= TRACKING_THRESHOLD_NUM_))
+        if(frame_count >= TRACKING_THRESHOLD_NUM_)
         {
             // if (USE_DATABASE_) identify_object(op, nearest_id);
-            identify_object(op, nearest_id);
+            std::cout << "object_position: " << transformed_pose.pose.position.x << ", " << transformed_pose.pose.position.y << std::endl;
+            // identify_object(op, nearest_id);
+            identify_object(op.img, transformed_pose.pose, op.error, nearest_id);
+            // std::cout << "nearest_id: " << nearest_id << std::endl;
             // else if (ADD_NEW_OBJECT_)
             if (ADD_NEW_OBJECT_)
             {
@@ -212,15 +217,15 @@ void ObjectIdentifier::ops_with_img_callback(const object_detector_msgs::ObjectP
     past_ops_with_id_list_.push_back(ops_with_id);
     if(past_ops_with_id_list_.size() > TRACKING_FRAME_NUM_) past_ops_with_id_list_.erase(past_ops_with_id_list_.begin());
 
-    if(IS_ID_DEBUG_)
-    {
+    // if(IS_ID_DEBUG_)
+    // {
         std::cout << "ids: ";
         for(const auto &id : ids)
         {
             std::cout << id << ", ";
         }
         std::cout << std::endl;
-    }
+    // }
 
     if(USE_VISUALIZATION_)
     {
@@ -250,10 +255,12 @@ void ObjectIdentifier::ops_with_img_callback(const object_detector_msgs::ObjectP
 
 void ObjectIdentifier::object_map_callback(const multi_localizer_msgs::ObjectMapConstPtr& msg)
 {
-    for(auto &object_data : msg->data)
+    // std::cout << "=== Object Map Callback ===" << std::endl;
+    for(const auto &object_data : msg->data)
     {
         object_map_.emplace(object_data.id, object_data);
     }
+    // std::cout << "object_map_.size(): " << object_map_.size() << std::endl;
 }
 
 void ObjectIdentifier::set_detector_mode(std::string detector_mode)
@@ -373,13 +380,13 @@ void ObjectIdentifier::create_database(std::string reference_images_path,std::st
     std::cout << "=============================" << std::endl;
 }
 
-void ObjectIdentifier::identify_object(object_detector_msgs::ObjectPositionWithImage input_msg,int& object_id)
+void ObjectIdentifier::identify_object(sensor_msgs::Image input_image,geometry_msgs::Pose input_pose,double error,int& object_id)
 {
     if(USE_DATABASE_){
         cv_bridge::CvImagePtr cv_ptr;
         try
         {
-            cv_ptr = cv_bridge::toCvCopy(input_msg.img, sensor_msgs::image_encodings::BGR8);
+            cv_ptr = cv_bridge::toCvCopy(input_image, sensor_msgs::image_encodings::BGR8);
         }
         catch(cv_bridge::Exception& ex)
         {
@@ -405,10 +412,10 @@ void ObjectIdentifier::identify_object(object_detector_msgs::ObjectPositionWithI
             int ret_id = reference_images_.at(r.id).id;
             double ret_x = object_map_.at(ret_id).x;
             double ret_y = object_map_.at(ret_id).y;
-            double obj_x = input_msg.x;
-            double obj_y = input_msg.y;
+            double obj_x = input_pose.position.x;
+            double obj_y = input_pose.position.y;
             double distance = sqrt(pow(ret_x - obj_x, 2) + pow(ret_y - obj_y, 2));
-            if(distance < input_msg.error)
+            if(distance < error)
             {
                 object_id = reference_images_.at(r.id).id;
                 std::cout << "ret_score: " << r.score << std::endl;
@@ -422,7 +429,7 @@ void ObjectIdentifier::identify_object(object_detector_msgs::ObjectPositionWithI
     double nearest_distance = 1000000;
     for(const auto &od : object_map_)
     {
-        double distance = sqrt(pow(od.second.x - input_msg.x, 2) + pow(od.second.y - input_msg.y, 2));
+        double distance = sqrt(pow(od.second.x - input_pose.position.x, 2) + pow(od.second.y - input_pose.position.y, 2));
         if(distance < nearest_distance)
         {
             nearest_distance = distance;

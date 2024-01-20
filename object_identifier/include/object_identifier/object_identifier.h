@@ -34,7 +34,8 @@ private:
     void load_reference_images(std::string reference_images_path);
     void calc_features(Image& image,std::string name,cv::Mat img);
     void create_database(std::string reference_images_path,std::string database_name);
-    void identify_object(object_detector_msgs::ObjectPositionWithImage input_msg,int& object_id);
+    // void identify_object(object_detector_msgs::ObjectPositionWithImage input_msg,int& object_id);
+    void identify_object(sensor_msgs::Image input_image,geometry_msgs::Pose input_pose,double error,int& object_id);
     void add_new_image(int object_id,std::string name, sensor_msgs::Image image);
     void save_images();
     void save_text_file();
