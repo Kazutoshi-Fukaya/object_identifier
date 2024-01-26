@@ -1,6 +1,8 @@
 int32 id
 string Class
 float64 probability
+float64 error
+float64 sd
 float64 x
 float64 y
 float64 z
