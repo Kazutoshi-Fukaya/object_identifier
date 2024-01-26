@@ -200,6 +200,7 @@ void ObjectIdentifier::ops_with_img_callback(const object_detector_msgs::ObjectP
         op_with_id.z = transformed_pose.pose.position.z;
         op_with_id.id = nearest_id;
         op_with_id.error = op.error;
+        op_with_id.sd = op.sd;
         ops_with_id.object_positions_with_id.push_back(op_with_id);
 
         object_identifier_msgs::ObjectPositionWithID rop_with_id;
@@ -208,6 +209,7 @@ void ObjectIdentifier::ops_with_img_callback(const object_detector_msgs::ObjectP
         rop_with_id.z = op.z;
         rop_with_id.id = nearest_id;
         rop_with_id.error = op.error;
+        rop_with_id.sd = op.sd;
         rops_with_id.object_positions_with_id.push_back(rop_with_id);
 
         ids.push_back(nearest_id);
