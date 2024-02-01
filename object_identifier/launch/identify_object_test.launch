@@ -1,0 +1,12 @@
+<?xml version="1.0"?>
+<launch>
+    <node pkg="object_identifier" type="identify_object_test" name="identify_object_test" output="screen">
+        <param name="HZ" value="10" />
+        <param name="VOCABULARY_K" value="9" />
+        <param name="VOCABULARY_L" value="3" />
+        <param name="DATABASE_MAX_RESULTS" value="15" />
+        <param name="DETECTOR_MODE" value="orb" />
+        <param name="REFERENCE_IMAGES_PATH" value="$(find object_identifier)/reference_data/test/" />
+        <param name="INPUT_IMAGE_PATH" value="$(find object_identifier)/reference_data/test/rgb/image7.jpg" />
+    </node>
+</launch>

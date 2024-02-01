@@ -31,7 +31,7 @@
 
     <!-- object_identifier_node -->
     <include file="$(find object_identifier)/launch/object_identifier.launch" >
-        <arg name="is_id_debug"      default="true" />
+        <arg name="is_id_debug"      default="false" />
         <arg name="use_visualization" default="true" />
         <arg name="use_database"      default="false" />
         <arg name="use_existing_vocabulary" default="false" />
@@ -50,9 +50,11 @@
         <arg name="base_link_frame_id" default="base_link" />
         <arg name="camera_frame_id"  default="front_cam_color_optical_frame" />
         <arg name="reference_images_path" default="$(find object_identifier)/reference_data/test/" />
-        <!-- <arg name="save_file_path" default="home/amsl/catkin_ws/src/lifelong_localization/reference_data/save_image_test/" /> -->
-        <arg name="save_file_path" default="$(find object_identifier)/reference_data/save_image_test/" />
+        <arg name="save_file_path" default="/home/amsl/catkin_ws/src/lifelong_localizer/reference_data/save_image_test/" />
     </include>
+
+    <!-- debug object_map -->
+    <include file="$(find object_identifier)/launch/debug_object_map_publisher.launch" />
 
     <!-- tf -->
     <!-- <node pkg="tf2_ros" type="static_transform_publisher" name="map_to_base_link" args="0 0 0 0 0 0 1 map base_link" /> -->
@@ -68,7 +70,15 @@
         <arg name="camera_frame_id" default="front_cam_color_optical_frame" />
     </include> -->
 
+    <!-- pcd to pointcloud -->
+    <arg name="pcd_file" default="/home/amsl/pcd_data/d_kan/dkan_1f.pcd" />
+    <arg name="interval" default="0.1" />
+    <node pkg="pcl_ros" type="pcd_to_pointcloud" name="pcd_pub" args="$(arg pcd_file) $(arg interval)">
+        <param name="frame_id" value="map" />
+    </node>
+
     <!-- rviz -->
-    <node pkg="rviz" type="rviz" name="rviz" args="-d $(find object_identifier)/config/rviz/object_tracking_test.rviz" />
+    <!-- <node pkg="rviz" type="rviz" name="rviz" args="-d $(find object_identifier)/config/rviz/object_tracking_test.rviz" /> -->
+    <node pkg="rviz" type="rviz" name="rviz" args="-d $(find object_identifier)/config/rviz/object_ref.rviz" />
 
 </launch>

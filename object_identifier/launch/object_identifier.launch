@@ -26,6 +26,8 @@
     <node pkg="object_identifier" type="object_identifier_node" name="object_identifier" output="screen" >
         <!-- remap -->
         <remap from="ops_with_img_in" to="/object_positions_with_image" />
+        <!-- <remap from="object_map_in" to="/object_map" /> -->
+        <remap from="object_map_in" to="/debug_object_map_out" />
         <remap from="ops_with_id_out" to="/object_positions_with_id" />
         <remap from="rops_with_id_out" to="/relative_object_positions_with_id" />
 

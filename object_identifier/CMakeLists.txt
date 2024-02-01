@@ -60,3 +60,21 @@ target_link_libraries(${PROJECT_NAME}_node
   ${OpenCV_LIBRARIES}
   DBoW3
 )
+
+add_executable(identify_object_test
+  src/identify_object_test.cpp
+)
+target_link_libraries(identify_object_test
+  ${catkin_LIBRARIES}
+  ${OpenCV_LIBRARIES}
+  DBoW3
+)
+
+add_executable(debug_object_map_publisher
+  src/debug_object_map_publisher.cpp
+)
+target_link_libraries(debug_object_map_publisher
+  ${catkin_LIBRARIES}
+  ${OpenCV_LIBRARIES}
+  DBoW3
+)

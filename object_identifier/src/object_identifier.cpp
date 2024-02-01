@@ -48,7 +48,7 @@ ObjectIdentifier::ObjectIdentifier()
 
     // subscriber
     ops_with_img_in_ = nh_.subscribe("ops_with_img_in", 1, &ObjectIdentifier::ops_with_img_callback, this);
-    object_map_sub_ = nh_.subscribe("object_map", 1, &ObjectIdentifier::object_map_callback, this);
+    object_map_sub_ = nh_.subscribe("object_map_in", 1, &ObjectIdentifier::object_map_callback, this);
 
     // publisher
     ops_with_id_out_ = nh_.advertise<object_identifier_msgs::ObjectPositionsWithID>("ops_with_id_out", 1);
@@ -160,7 +160,8 @@ void ObjectIdentifier::ops_with_img_callback(const object_detector_msgs::ObjectP
                 if((past_op.y - transformed_pose.pose.position.y) > OBJECT_DISTANCE_THRESHOLD_) continue;
                 if((past_op.z - transformed_pose.pose.position.z) > OBJECT_DISTANCE_THRESHOLD_) continue;
                 double distance = sqrt(pow(past_op.x - transformed_pose.pose.position.x, 2) + pow(past_op.y - transformed_pose.pose.position.y, 2) + pow(past_op.z - transformed_pose.pose.position.z, 2));
-                if(distance < OBJECT_DISTANCE_THRESHOLD_)
+                // if(distance < OBJECT_DISTANCE_THRESHOLD_)
+                if(distance < op.error)
                 {
                     is_found = true;
                     if(distance < nearest_distance)
@@ -174,15 +175,12 @@ void ObjectIdentifier::ops_with_img_callback(const object_detector_msgs::ObjectP
         }
         // std::cout << "frame_count: " << frame_count << std::endl;
 
-        // if((nearest_id == -1) && (frame_count >= TRACKING_THRESHOLD_NUM_))
-        if(frame_count >= TRACKING_THRESHOLD_NUM_)
+        if((nearest_id == -1) && (frame_count >= TRACKING_THRESHOLD_NUM_))
+        // if(frame_count >= TRACKING_THRESHOLD_NUM_)
         {
-            // if (USE_DATABASE_) identify_object(op, nearest_id);
             std::cout << "object_position: " << transformed_pose.pose.position.x << ", " << transformed_pose.pose.position.y << std::endl;
-            // identify_object(op, nearest_id);
             identify_object(op.img, transformed_pose.pose, op.error, nearest_id);
             // std::cout << "nearest_id: " << nearest_id << std::endl;
-            // else if (ADD_NEW_OBJECT_)
             if (ADD_NEW_OBJECT_)
             {
                 
@@ -260,7 +258,7 @@ void ObjectIdentifier::ops_with_img_callback(const object_detector_msgs::ObjectP
 
 void ObjectIdentifier::object_map_callback(const multi_localizer_msgs::ObjectMapConstPtr& msg)
 {
-    // std::cout << "=== Object Map Callback ===" << std::endl;
+    std::cout << "=== Object Map Callback ===" << std::endl;
     for(const auto &object_data : msg->data)
     {
         object_map_.emplace(object_data.id, object_data);
@@ -299,7 +297,7 @@ void ObjectIdentifier::load_reference_images(std::string reference_images_path)
 
             Images images(object_id);
             cv::Mat rgb_image;
-            rgb_image = cv::imread(reference_images_path + rgb_name,0);
+            rgb_image = cv::imread(reference_images_path + rgb_name,1);
             if(rgb_image.empty()) break;
             std::cout << "file_name: " << rgb_name << std::endl;
             Image rgb;
@@ -472,6 +470,7 @@ void ObjectIdentifier::save_images()
     for (auto &ri : reference_images_)
     {
         std::string rgb_name = "image" + std::to_string(count) + ".jpg";
+        //std::string rgb_name = "object" + std::to_string(ri.id) + "/image" + std::to_string(count) + ".jpg";
         cv::imwrite(SAVE_FILE_PATH_ + rgb_name, ri.rgb.img);
         count++;
     }
@@ -480,12 +479,13 @@ void ObjectIdentifier::save_images()
 void ObjectIdentifier::save_text_file()
 {
     // save csv file
-    std::string file_name = SAVE_FILE_PATH_ + "save.txt";
+    std::string file_name = SAVE_FILE_PATH_ + "raw_save.txt";
     std::ofstream ofs(file_name);
     int count = 0;
     for (auto &ri : reference_images_)
     {
         std::string rgb_name = "image" + std::to_string(count) + ".jpg";
+        //std::string rgb_name = "object" + std::to_string(ri.id) + "/image" + std::to_string(count) + ".jpg";
         ofs << rgb_name << "," << ri.id << std::endl;
         count++;
     }
