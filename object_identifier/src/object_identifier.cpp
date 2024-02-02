@@ -3,8 +3,10 @@
 using namespace dbow3;
 using namespace object_identifier;
 
-ObjectIdentifier::ObjectIdentifier()
-    : private_nh_("~")
+ObjectIdentifier::ObjectIdentifier() :
+        private_nh_("~"),
+        start_time_(ros::Time::now()),
+        identify_interval_counter_(0)
 {
     // parameter
     private_nh_.param("IS_ID_DEBUG", IS_ID_DEBUG_, false);
@@ -175,8 +177,8 @@ void ObjectIdentifier::ops_with_img_callback(const object_detector_msgs::ObjectP
         }
         // std::cout << "frame_count: " << frame_count << std::endl;
 
-        if((nearest_id == -1) && (frame_count >= TRACKING_THRESHOLD_NUM_))
-        // if(frame_count >= TRACKING_THRESHOLD_NUM_)
+        // if((nearest_id == -1) && (frame_count >= TRACKING_THRESHOLD_NUM_))
+        if(frame_count >= TRACKING_THRESHOLD_NUM_)
         {
             std::cout << "object_position: " << transformed_pose.pose.position.x << ", " << transformed_pose.pose.position.y << std::endl;
             identify_object(op.img, transformed_pose.pose, op.error, nearest_id);
@@ -537,6 +539,11 @@ std_msgs::ColorRGBA ObjectIdentifier::get_color(double r,double g,double b)
     color_msg.b = b;
     color_msg.a = 0.7;
     return color_msg;
+}
+
+double ObjectIdentifier::get_time()
+{
+    return (ros::Time::now() - start_time_).toSec();
 }
 
 void ObjectIdentifier::process()

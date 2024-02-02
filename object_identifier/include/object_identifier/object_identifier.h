@@ -43,6 +43,7 @@ private:
     visualization_msgs::Marker create_init_marker();
     geometry_msgs::Pose get_pose(double x,double y,double z);
     std_msgs::ColorRGBA get_color(double r,double g,double b);
+    double get_time();
 
     // node handle
     ros::NodeHandle nh_;
@@ -75,6 +76,10 @@ private:
     int object_max_id_;
     int added_images_num_;
     int ops_sub_counter_;
+
+    // buffer
+    ros::Time start_time_;              // unused?
+    int identify_interval_counter_;     // unused?
 
     // features
     std::vector<cv::Mat> features_;
