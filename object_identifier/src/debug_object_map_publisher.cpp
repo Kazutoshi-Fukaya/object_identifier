@@ -15,8 +15,9 @@ DebugObjectMapPublisher::DebugObjectMapPublisher()
     object_map_pub_ = nh_.advertise<multi_localizer_msgs::ObjectMap>("debug_object_map_out",1);
 
     // start time
-    start_time_ = ros::Time::now();
+    // start_time_ = ros::Time::now();
     is_object_map_loaded_ = false;
+    get_valid_time_ = false;
 }
 
 DebugObjectMapPublisher::~DebugObjectMapPublisher(){}
@@ -90,6 +91,10 @@ void DebugObjectMapPublisher::process()
 {
     ros::Rate loop_rate(HZ_);
     while(ros::ok()){
+        if(!get_valid_time_ && ros::Time::now().isValid()){
+            start_time_ = ros::Time::now();
+            get_valid_time_ = true;
+        }
         load_object_map();
         publish_object_map();
         ros::spinOnce();

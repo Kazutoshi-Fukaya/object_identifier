@@ -29,6 +29,7 @@ private:
     ros::Time start_time_;
     multi_localizer_msgs::ObjectMap object_map_;
     bool is_object_map_loaded_;
+    bool get_valid_time_;
 
     // parameters
     int HZ_;

@@ -70,7 +70,7 @@ ObjectIdentifier::ObjectIdentifier() :
 
 ObjectIdentifier::~ObjectIdentifier()
 {
-    std::cout << "=== ObjectIdentifier Destructor ===" << std::endl;
+    // std::cout << "=== ObjectIdentifier Destructor ===" << std::endl;
 
     // save
     if(SAVE_VOCABULARY_ && !USE_EXISTING_DATABASE_)
@@ -98,7 +98,7 @@ ObjectIdentifier::~ObjectIdentifier()
         std::cout << "=== Success to Save Reference Data ===" << std::endl;
     }
 
-    std::cout << "=== Success to ObjectIdentifier Destructor ===" << std::endl;
+    // std::cout << "=== Success to ObjectIdentifier Destructor ===" << std::endl;
 }
 
 void ObjectIdentifier::ops_with_img_callback(const object_detector_msgs::ObjectPositionsWithImageConstPtr& msg)
@@ -180,7 +180,7 @@ void ObjectIdentifier::ops_with_img_callback(const object_detector_msgs::ObjectP
         // if((nearest_id == -1) && (frame_count >= TRACKING_THRESHOLD_NUM_))
         if(frame_count >= TRACKING_THRESHOLD_NUM_)
         {
-            std::cout << "object_position: " << transformed_pose.pose.position.x << ", " << transformed_pose.pose.position.y << std::endl;
+            // std::cout << "object_position: " << transformed_pose.pose.position.x << ", " << transformed_pose.pose.position.y << std::endl;
             identify_object(op.img, transformed_pose.pose, op.error, nearest_id);
             // std::cout << "nearest_id: " << nearest_id << std::endl;
             if (ADD_NEW_OBJECT_)
@@ -199,6 +199,7 @@ void ObjectIdentifier::ops_with_img_callback(const object_detector_msgs::ObjectP
         op_with_id.y = transformed_pose.pose.position.y;
         op_with_id.z = transformed_pose.pose.position.z;
         op_with_id.id = nearest_id;
+        op_with_id.Class = op.Class;
         op_with_id.credibility = op.credibility;
         op_with_id.error = op.error;
         op_with_id.sd = op.sd;
@@ -209,6 +210,7 @@ void ObjectIdentifier::ops_with_img_callback(const object_detector_msgs::ObjectP
         rop_with_id.y = op.y;
         rop_with_id.z = op.z;
         rop_with_id.id = nearest_id;
+        rop_with_id.Class = op.Class;
         rop_with_id.credibility = op.credibility;
         rop_with_id.error = op.error;
         rop_with_id.sd = op.sd;
@@ -226,12 +228,12 @@ void ObjectIdentifier::ops_with_img_callback(const object_detector_msgs::ObjectP
 
     // if(IS_ID_DEBUG_)
     // {
-        std::cout << "ids: ";
-        for(const auto &id : ids)
-        {
-            std::cout << id << ", ";
-        }
-        std::cout << std::endl;
+        // std::cout << "ids: ";
+        // for(const auto &id : ids)
+        // {
+        //     std::cout << id << ", ";
+        // }
+        // std::cout << std::endl;
     // }
 
     if(USE_VISUALIZATION_)
@@ -262,7 +264,8 @@ void ObjectIdentifier::ops_with_img_callback(const object_detector_msgs::ObjectP
 
 void ObjectIdentifier::object_map_callback(const multi_localizer_msgs::ObjectMapConstPtr& msg)
 {
-    std::cout << "=== Object Map Callback ===" << std::endl;
+    // std::cout << "=== Object Map Callback ===" << std::endl;
+    object_map_.clear();
     for(const auto &object_data : msg->data)
     {
         object_map_.emplace(object_data.id, object_data);
